@@ -91,7 +91,7 @@ class NetSpeedMeasurement {
             mLastTotalRxBytes.setValueAt(i, nowTotalRxBytes);
             lastTimeStamp = nowTimeStamp;
 
-            List<OnSpeedUpdatedListener> listeners = mListenerMap.get(i);
+            List<OnSpeedUpdatedListener> listeners = mListenerMap.get(uid);
             if (listeners == null) return;
             Iterator<OnSpeedUpdatedListener> iterator = listeners.iterator();
             while (iterator.hasNext()) {//非UI线程；
