@@ -2,118 +2,71 @@ package wang.relish.netspeed.sample;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 import wang.relish.netspeed.NetSpeed;
 import wang.relish.netspeed.OnSpeedUpdatedAdapter;
 import wang.relish.netspeed.OnSpeedUpdatedListener;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+
+    private TextView tv_listen, tv_adapter;
+
+    private Button btn_start, btn_net_request;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final TextView tvspeed1 = (TextView) findViewById(R.id.tv_speed1);
-        final TextView tvspeed2 = (TextView) findViewById(R.id.tv_speed2);
+        tv_listen = (TextView) findViewById(R.id.tv_listen);
+        tv_adapter = (TextView) findViewById(R.id.tv_adapter);
 
+        btn_start = (Button) findViewById(R.id.btn_start);
+        btn_net_request = (Button) findViewById(R.id.btn_net_request);
+
+        btn_start.setOnClickListener(this);
+        btn_net_request.setOnClickListener(this);
+
+        //默认监听器：每2s更新一次网速（即过去2s内的平均网速）
         NetSpeed.addSpeedUpdateListener(new OnSpeedUpdatedListener() {
             @Override
             public void onSpeedUpdated(long speed) {
-                tvspeed1.setText(speed + "B/s");
+                tv_listen.setText(speed + "B/s");
             }
         });
 
+        //网速适配器：每4s(依构造方法的入参决定,传几就是几s)更新一次网速（即过去4s内的平均网速）
         NetSpeed.addSpeedUpdateListener(new OnSpeedUpdatedAdapter(4) {
             @Override
             public void onSpeedUpdatedPerInterval(long speed) {
-                tvspeed2.setText(speed + "B/s");
-            }
-        });
-
-
-        findViewById(R.id.btn_start).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                NetSpeed.startListen();
-            }
-        });
-
-        findViewById(R.id.btn_request).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            HttpURLConnection conn = (HttpURLConnection) new URL("https://www.baidu.com/").openConnection();
-                            conn.setConnectTimeout(5000);
-                            conn.setRequestMethod("GET");
-
-                            final int code = conn.getResponseCode();
-                            InputStream is = conn.getInputStream(); // 字节流转换成字符串
-                            final String result = streamToString(is);
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Toast.makeText(MainActivity.this, "code = " + code, Toast.LENGTH_SHORT).show();
-                                    Toast.makeText(MainActivity.this, result, Toast.LENGTH_SHORT).show();
-                                }
-                            });
-
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Toast.makeText(MainActivity.this, "网络连接失败！", Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                        }
-                    }
-                }).start();
+                tv_adapter.setText(speed + "B/s");
             }
         });
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        NetSpeed.stopListen();
-        Toast.makeText(this, "stop listening", Toast.LENGTH_SHORT).show();
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.btn_start:
+                //开始网速监听
+                NetSpeed.startListen();
+                break;
+            case R.id.btn_net_request:
+                //网络请求（产生流量消耗，可以直观地显示网速变化）
+                Thread thread = new Thread(new NetRequestRunnable(MainActivity.this));
+                thread.start();
+                break;
+        }
     }
 
-    /**
-     * 将输入流转换成字符串
-     *
-     * @param is 从网络获取的输入流
-     */
-
-    public static String streamToString(InputStream is) {
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            byte[] buffer = new byte[1024];
-            int len = 0;
-            while ((len = is.read(buffer)) != -1) {
-                baos.write(buffer, 0, len);
-            }
-            baos.close();
-            is.close();
-            byte[] byteArray = baos.toByteArray();
-            return new String(byteArray);
-        } catch (Exception e) {
-            Log.e("tag", e.toString());
-            return null;
-        }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        NetSpeed.stopListen();//停止网速监听
+        Toast.makeText(this, "stop listening", Toast.LENGTH_SHORT).show();
     }
 }

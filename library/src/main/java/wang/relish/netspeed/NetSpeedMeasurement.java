@@ -5,8 +5,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.SystemClock;
+import android.util.Log;
 import android.util.SparseArray;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -61,7 +61,7 @@ class NetSpeedMeasurement {
 
     void startListen() {
         if (handler.hasMessages(SPEED_UPDATE_TAG)) {
-            Toast.makeText(NetSpeed.getContext(), "Starting listening twice is forbidden.", Toast.LENGTH_SHORT).show();
+            Log.w("NetSpeed", "Listener is already running.");
             return;
         }
         lastTimeStamp = SystemClock.elapsedRealtime();

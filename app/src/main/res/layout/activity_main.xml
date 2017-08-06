@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="wang.relish.netspeed.sample.MainActivity">
+    tools:activity="wang.relish.netspeed.sample.MainActivity">
 
 
     <LinearLayout
@@ -21,7 +21,7 @@
             android:textSize="18sp" />
 
         <TextView
-            android:id="@+id/tv_speed1"
+            android:id="@+id/tv_listen"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
@@ -44,7 +44,7 @@
             android:textSize="18sp" />
 
         <TextView
-            android:id="@+id/tv_speed2"
+            android:id="@+id/tv_adapter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
@@ -63,7 +63,7 @@
         android:textSize="16sp" />
 
     <Button
-        android:id="@+id/btn_request"
+        android:id="@+id/btn_net_request"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
