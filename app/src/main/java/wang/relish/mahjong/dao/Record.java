@@ -2,6 +2,11 @@ package wang.relish.mahjong.dao;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.support.annotation.NonNull;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import wang.relish.mahjong.db.DBHelper;
 
@@ -9,7 +14,7 @@ import wang.relish.mahjong.db.DBHelper;
  * @author Relish Wang
  * @since 2018/02/15
  */
-public class Record {
+public class Record implements Serializable, Comparable<Record> {
 
     private long id;
     private long createTime;
@@ -80,7 +85,6 @@ public class Record {
     }
 
     public static boolean isExist(long id) {
-
         DBHelper helper = new DBHelper();
         SQLiteDatabase db = helper.getWritableDatabase();
         Cursor cursor = null;
@@ -92,5 +96,41 @@ public class Record {
         } finally {
             if (cursor != null) cursor.close();
         }
+    }
+
+    public static List<Record> getRecords() {
+        DBHelper helper = new DBHelper();
+        SQLiteDatabase db = helper.getWritableDatabase();
+        Cursor cursor = null;
+        List<Record> records = new ArrayList<>();
+        try {
+            cursor = db.rawQuery("select id, createTime, winnerId, loserId from record", null);
+            if (cursor != null && cursor.moveToFirst()) {
+                Record record = null;
+                do {
+                    long id = cursor.getLong(0);
+                    long createTime = cursor.getLong(1);
+                    long winnerId = cursor.getLong(2);
+                    long loserId = cursor.getLong(3);
+                    record = new Record();
+                    record.setId(id);
+                    record.setCreateTime(createTime);
+                    record.setWinnerId(winnerId);
+                    record.setLoserId(loserId);
+                    records.add(record);
+                } while (cursor.moveToNext());
+                return records;
+            }
+            return records;
+        } catch (Exception e) {
+            return records;
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+    }
+
+    @Override
+    public int compareTo(@NonNull Record record) {
+        return (int) (createTime - record.createTime);
     }
 }

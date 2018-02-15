@@ -134,13 +134,14 @@ public class User implements Serializable {
         }
     }
 
-    public static boolean resetScore() {
+    public static boolean reset() {
         DBHelper helper = new DBHelper();
         SQLiteDatabase db = helper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put("score", 0);
         try {
             db.update("user", cv, null, null);
+            db.execSQL("delete from record");
             return true;
         } catch (Exception e) {
             return false;
@@ -160,6 +161,24 @@ public class User implements Serializable {
             }
         } catch (Exception e) {
             return -1;
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+    }
+
+    public static String getNameById(long id) {
+        DBHelper helper = new DBHelper();
+        SQLiteDatabase db = helper.getWritableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery("select name from user where id = ?", new String[]{id + ""});
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(0);
+            } else {
+                return "";
+            }
+        } catch (Exception e) {
+            return "";
         } finally {
             if (cursor != null) cursor.close();
         }

@@ -205,11 +205,13 @@ public class UserListActivity extends AppCompatActivity {
                     .show();
             return true;
         } else if (id == R.id.menu_reset) {
-            if (User.resetScore()) {
+            if (User.reset()) {
                 loadData();
             } else {
                 ToastUtil.show("重置失败!");
             }
+        }else if(id == R.id.menu_turn){
+            RecordListActivity.start(this);
         }
 
         return super.onOptionsItemSelected(item);
