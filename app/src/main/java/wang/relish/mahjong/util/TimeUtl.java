@@ -27,7 +27,12 @@ public class TimeUtl {
     }
 
     public static String getHHmm(long t){
-        SimpleDateFormat format = new SimpleDateFormat("HH:mm", Locale.ENGLISH);
+        SimpleDateFormat format = new SimpleDateFormat("HH:mm", Locale.CHINA);
+        return format.format(new Date(t));
+    }
+
+    public static String getyyyyMMdd(long t) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd", Locale.CHINA);
         return format.format(new Date(t));
     }
 }

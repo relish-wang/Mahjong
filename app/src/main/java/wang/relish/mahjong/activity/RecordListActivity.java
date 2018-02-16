@@ -101,6 +101,7 @@ public class RecordListActivity extends AppCompatActivity {
             Record record = mRecords.get(position);
             boolean dayFirstTime = isDayFirstTime(position);
             holder.tv_day.setVisibility(dayFirstTime ? View.VISIBLE : View.GONE);
+            holder.tv_day.setText(TimeUtl.getyyyyMMdd(record.getCreateTime()));
             holder.tv_time.setText(TimeUtl.getHHmm(record.getCreateTime()));
             holder.tv_record.setText(getRecordStr(record));
         }

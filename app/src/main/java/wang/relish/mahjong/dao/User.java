@@ -141,7 +141,6 @@ public class User implements Serializable {
         cv.put("score", 0);
         try {
             db.update("user", cv, null, null);
-            db.execSQL("delete from record");
             return true;
         } catch (Exception e) {
             return false;
