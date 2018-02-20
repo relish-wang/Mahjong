@@ -24,4 +24,10 @@
         android:layout_height="wrap_content"
         android:text="开始打麻将" />
 
+    <Button
+        android:id="@+id/btn_start_red_ten"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="开始打红十" />
+
 </LinearLayout>

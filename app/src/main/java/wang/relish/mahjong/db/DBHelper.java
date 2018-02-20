@@ -1,6 +1,5 @@
 package wang.relish.mahjong.db;
 
-import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -10,9 +9,12 @@ import wang.relish.mahjong.App;
  * @author Relish Wang
  * @since 2018/02/15
  */
-public class DBHelper extends SQLiteOpenHelper{
+public class DBHelper extends SQLiteOpenHelper {
 
-    private static final int VERSION = 1;
+    /**
+     * 1->2: 加入红十
+     */
+    private static final int VERSION = 2;
 
     private static final String DB_NAME = "mahjong";
 
@@ -29,7 +31,11 @@ public class DBHelper extends SQLiteOpenHelper{
             "id integer primary key," +
             "createTime timestamp," +
             "winnerId long," +
-            "loserId long);";
+            "loserId long," +
+            "game integer," +
+            "isReversed integer," +
+            "isBasked integer," +
+            "result integer);";
 
     @Override
     public void onCreate(SQLiteDatabase db) {

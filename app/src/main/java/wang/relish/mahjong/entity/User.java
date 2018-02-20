@@ -1,4 +1,4 @@
-package wang.relish.mahjong.dao;
+package wang.relish.mahjong.entity;
 
 import android.content.ContentValues;
 import android.database.Cursor;

@@ -11,4 +11,7 @@
     <color name="_00ff00">#00ff00</color>
     <color name="_ff571a">#ff571a</color>
     <color name="_d6d7d7">#d6d7d7</color>
+    <color name="red">#FF0000</color>
+    <color name="red_ten">#f33039</color>
+    <color name="orange">#FF571A</color>
 </resources>

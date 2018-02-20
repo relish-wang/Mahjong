@@ -1,9 +1,9 @@
-package wang.relish.mahjong.activity;
+package wang.relish.mahjong.activity.abs;
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -23,38 +23,53 @@ import java.util.ArrayList;
 import java.util.List;
 
 import wang.relish.mahjong.R;
+import wang.relish.mahjong.activity.RecordListActivity;
 import wang.relish.mahjong.callback.UserCallback;
-import wang.relish.mahjong.dao.Record;
-import wang.relish.mahjong.dao.User;
+import wang.relish.mahjong.entity.Game;
+import wang.relish.mahjong.entity.User;
 import wang.relish.mahjong.util.ToastUtil;
 
-public class UserListActivity extends AppCompatActivity {
+public abstract class AbsGameActivity extends AppCompatActivity {
 
-    public static void start(Context context) {
-        Intent intent = new Intent(context, UserListActivity.class);
-        context.startActivity(intent);
-    }
+    /**
+     * 初始化toolbar
+     */
+    protected abstract void initToolbar(Toolbar toolbar);
+
+    /**
+     * 回合结算
+     */
+    protected abstract void settlement();
 
     List<User> mUsers = new ArrayList<>();
     private RecyclerView mRvUsers;
     private UsersAdapter mAdapter;
     private Button mBtnTurn;
 
-    private User winner;
-    private User loser;
+    @Game
+    private int game = Game.UNDEFINED;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_list);
         Toolbar toolbar = findViewById(R.id.toolbar);
+        initToolbar(toolbar);
         setSupportActionBar(toolbar);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setHomeButtonEnabled(true);
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+
+        Intent intent = getIntent();
+        game = intent.getIntExtra("game", Game.UNDEFINED);
 
         mBtnTurn = findViewById(R.id.btn_turn);
         mBtnTurn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                selectWinMode();
+                settlement();
             }
         });
 
@@ -65,91 +80,12 @@ public class UserListActivity extends AppCompatActivity {
         loadData();
     }
 
-    private void loadData() {
+    protected void loadData() {
         mUsers = User.getUsers();
         mAdapter.notifyDataSetChanged();
     }
 
-    private void selectWinMode() {
-        new AlertDialog.Builder(UserListActivity.this)
-                .setTitle("选择赢局模式")
-                .setPositiveButton("放铳", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        balance(false);
-                    }
-                })
-                .setNeutralButton("取消", null)
-                .setNegativeButton("自摸", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        balance(true);
-
-                    }
-                })
-                .show();
-    }
-
-    private void balance(final boolean isZimo) {
-        View view = LayoutInflater.from(UserListActivity.this).inflate(R.layout.dialog_fangchong, null);
-        final TextView tvWinner = view.findViewById(R.id.tv_winner);
-        final TextView tvLoser = view.findViewById(R.id.tv_loser);
-
-        tvWinner.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                selectUser(new UserCallback() {
-                    @Override
-                    public void onUserGet(User user) {
-                        winner = user;
-                        tvWinner.setText(user.getName());
-                    }
-                });
-            }
-        });
-        tvLoser.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                selectUser(new UserCallback() {
-                    @Override
-                    public void onUserGet(User user) {
-                        loser = user;
-                        tvLoser.setText(user.getName());
-                    }
-                });
-            }
-        });
-        tvLoser.setVisibility(isZimo ? View.GONE : View.VISIBLE);
-        new AlertDialog.Builder(UserListActivity.this)
-                .setView(view)
-                .setPositiveButton("录入", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        if (winner == null) {
-                            ToastUtil.show("未填入赢家");
-                            return;
-                        }
-                        if (!isZimo && loser == null) {
-                            ToastUtil.show("未填入放铳者");
-                            return;
-                        }
-                        Record record = new Record();
-                        record.setCreateTime(System.currentTimeMillis());
-                        record.setWinnerId(winner.getId());
-                        record.setLoserId(isZimo ? 0 : loser.getId());
-                        record.setId(Record.maxId() + 1);
-                        boolean save = record.save();
-                        if (save) {
-                            loadData();
-                            winner = null;
-                            loser = null;
-                        }
-                    }
-                })
-                .show();
-    }
-
-    private void selectUser(final UserCallback callback) {
+    protected void selectUser(final UserCallback callback) {
 
         final List<User> users = User.getUsers();
         int count = users.size();
@@ -157,12 +93,60 @@ public class UserListActivity extends AppCompatActivity {
         for (int i = 0; i < count; i++) {
             names[i] = users.get(i).getName();
         }
-        new AlertDialog.Builder(UserListActivity.this)
+        new AlertDialog.Builder(AbsGameActivity.this)
                 .setSingleChoiceItems(names, -1, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int which) {
                         callback.onUserGet(users.get(which));
                         dialogInterface.dismiss();
+                    }
+                })
+                .show();
+    }
+
+    protected void selectUsers(final UserCallback callback) {
+
+        final List<User> users = User.getUsers();
+        int count = users.size();
+        String[] names = new String[count];
+        for (int i = 0; i < count; i++) {
+            names[i] = users.get(i).getName();
+        }
+        boolean[] booleans = new boolean[count];
+        final List<User> redTenOwners = new ArrayList<>();
+        new AlertDialog.Builder(AbsGameActivity.this)
+                .setMultiChoiceItems(names, booleans, new DialogInterface.OnMultiChoiceClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i, boolean b) {
+                        User o = users.get(i);
+                        if (b) {
+                            if (redTenOwners.size() >= 2) {
+                                ToastUtil.show("红十最多两个人拥有！");
+                                dialogInterface.dismiss();
+                                return;
+                            }
+                            redTenOwners.add(o);
+                        } else {
+                            if (redTenOwners.contains(o)) {
+                                redTenOwners.remove(o);
+                            }
+                        }
+                    }
+                })
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                        int size = redTenOwners.size();
+                        if (size == 0) {
+                            ToastUtil.show("未选择红十拥有者！");
+                            return;
+                        }
+                        if (size > 2) {
+                            ToastUtil.show("红十最多两个人拥有！");
+                            return;
+                        }
+                        callback.onUserGet(redTenOwners.toArray(new User[size]));
                     }
                 })
                 .show();
@@ -183,11 +167,12 @@ public class UserListActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.menu_add_user) {
-
-            final View view = LayoutInflater.from(UserListActivity.this).inflate(R.layout.dialog_add_user, null);
-            new AlertDialog.Builder(UserListActivity.this)
-                    .setTitle("新建麻友")
+        if (id == android.R.id.home) {
+            onBackPressed();
+        } else if (id == R.id.menu_add_user) {
+            final View view = LayoutInflater.from(AbsGameActivity.this).inflate(R.layout.dialog_add_user, null);
+            new AlertDialog.Builder(AbsGameActivity.this)
+                    .setTitle("新建")
                     .setView(view)
                     .setPositiveButton("创建", new DialogInterface.OnClickListener() {
                         @Override
@@ -195,13 +180,14 @@ public class UserListActivity extends AppCompatActivity {
                             EditText etUserName = view.findViewById(R.id.et_user_name);
                             String name = etUserName.getText().toString();
                             if (TextUtils.isEmpty(name)) {
-                                ToastUtil.show("麻友名不得为空!");
+                                ToastUtil.show("名字不得为空!");
                                 return;
                             }
                             User.createUser(name);
                             loadData();
                         }
-                    }).setNegativeButton("取消", null)
+                    })
+                    .setNegativeButton("取消", null)
                     .show();
             return true;
         } else if (id == R.id.menu_reset) {
@@ -210,8 +196,8 @@ public class UserListActivity extends AppCompatActivity {
             } else {
                 ToastUtil.show("重置失败!");
             }
-        }else if(id == R.id.menu_turn){
-            RecordListActivity.start(this);
+        } else if (id == R.id.menu_turn) {
+            RecordListActivity.start(this, game);
         }
 
         return super.onOptionsItemSelected(item);
@@ -223,7 +209,7 @@ public class UserListActivity extends AppCompatActivity {
 
         @Override
         public UsersAdapter.VHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(UserListActivity.this).inflate(R.layout.item_user, parent, false);
+            View view = LayoutInflater.from(AbsGameActivity.this).inflate(R.layout.item_user, parent, false);
             return new VHolder(view);
         }
 
@@ -239,8 +225,8 @@ public class UserListActivity extends AppCompatActivity {
             holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View view) {
-                    new AlertDialog.Builder(UserListActivity.this)
-                            .setTitle("删除麻友")
+                    new AlertDialog.Builder(AbsGameActivity.this)
+                            .setTitle("删除")
                             .setMessage("是否删除[" + name + "]?")
                             .setPositiveButton("删除", new DialogInterface.OnClickListener() {
                                 @Override

@@ -26,8 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import wang.relish.mahjong.R;
-import wang.relish.mahjong.dao.Record;
-import wang.relish.mahjong.dao.User;
+import wang.relish.mahjong.entity.Game;
+import wang.relish.mahjong.entity.Record;
+import wang.relish.mahjong.entity.User;
 import wang.relish.mahjong.util.TimeUtl;
 
 public class RecordListActivity extends AppCompatActivity {
@@ -37,10 +38,16 @@ public class RecordListActivity extends AppCompatActivity {
     private RecordAdapter mAdapter;
 
 
-    public static void start(Context context) {
+    public static void start(Context context, int game) {
         Intent intent = new Intent(context, RecordListActivity.class);
+        intent.putExtra("game", game);
         context.startActivity(intent);
     }
+
+    /**
+     * 游戏
+     */
+    private int game = Game.UNDEFINED;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +62,9 @@ public class RecordListActivity extends AppCompatActivity {
             actionBar.setHomeButtonEnabled(true);
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+
+        Intent intent = getIntent();
+        game = intent.getIntExtra("game", Game.UNDEFINED);
 
         mRvRecords = findViewById(R.id.rv_records);
         mAdapter = new RecordAdapter();
@@ -107,19 +117,26 @@ public class RecordListActivity extends AppCompatActivity {
         }
 
         private SpannableStringBuilder getRecordStr(Record record) {
+            SpannableStringBuilder sb = new SpannableStringBuilder();
             long winnerId = record.getWinnerId();
             long loserId = record.getLoserId();
-            SpannableStringBuilder sb = new SpannableStringBuilder();
-            SpannableString winnerName = getName(winnerId, R.color.colorAccent);
-            if (loserId == 0) {//自摸
-                sb.append(winnerName);
-                sb.append("自摸");
-            } else {//放铳
-                SpannableString loserName = getName(loserId, R.color.colorPrimary);
+            if (game == Game.MAHJONG) {
+                SpannableString winnerName = getName(winnerId, R.color.colorAccent);
+                if (loserId == 0) {//自摸
+                    sb.append(winnerName);
+                    sb.append("自摸");
+                } else {//放铳
+                    SpannableString loserName = getName(loserId, R.color.colorPrimary);
 
-                sb.append(loserName);
-                sb.append("放铳给");
-                sb.append(winnerName);
+                    sb.append(loserName);
+                    sb.append("放铳给");
+                    sb.append(winnerName);
+                }
+            } else if (game == Game.RED_TEN) {
+                // TODO 红十
+
+            } else {
+                sb.append("未知赌局");
             }
             return sb;
         }

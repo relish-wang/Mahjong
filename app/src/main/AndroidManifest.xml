@@ -17,8 +17,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.UserListActivity" />
-        <activity android:name=".activity.RecordListActivity"></activity>
+        <activity android:name=".activity.RecordListActivity" />
+        <activity android:name=".activity.RedTenActivity" />
+        <activity android:name=".activity.MahjongActivity" />
     </application>
 
 </manifest>
