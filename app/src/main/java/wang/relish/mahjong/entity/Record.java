@@ -105,11 +105,12 @@ public class Record implements Serializable, Comparable<Record> {
         this.isBasked = isBasked;
     }
 
+    @RedTen
     public int getResult() {
         return result;
     }
 
-    public void setResult(int result) {
+    public void setResult(@RedTen int result) {
         this.result = result;
     }
 
@@ -131,8 +132,8 @@ public class Record implements Serializable, Comparable<Record> {
     public boolean save() {
         DBHelper helper = new DBHelper();
         SQLiteDatabase db = helper.getWritableDatabase();
-        db.execSQL("insert into record(id,createTime,winnerId,loserId,game,isReversed, isBasked) values(?,?,?,?,?,?,?)",
-                new String[]{id + "", createTime + "", winnerId + "", loserId + "", game + "", isReversed + "", isBasked + ""});
+        db.execSQL("insert into record(id,createTime,winnerId,loserId,game,isReversed, isBasked,result) values(?,?,?,?,?,?,?,?)",
+                new String[]{id + "", createTime + "", winnerId + "", loserId + "", game + "", isReversed + "", isBasked + "", result+""});
         if (game == Game.MAHJONG) {
             if (loserId == 0) {//自摸
                 db.execSQL("update user set score = score - 3 where id!=?", new String[]{winnerId + ""});
@@ -143,12 +144,14 @@ public class Record implements Serializable, Comparable<Record> {
                 db.execSQL("update user set score = score - 2 where id=?", new String[]{loserId + ""});
             }
         } else if (game == Game.RED_TEN) {
-            int rate = 1 << isBasked << isReversed;
-            int count = result * rate;
+            int rate = 1 << isBasked << (isBasked == 1 ? isReversed : 0);
             if (loserId == 0) {// 双红十
+                int realResult = result == RedTen.TRIPLE_SHUT ? result : 0;
+                int count = realResult * rate;
                 db.execSQL("update user set score = score " + (isReversed == 1 ? "-" : "+") + count + " where id!=?", new String[]{winnerId + ""});
                 db.execSQL("update user set score = score " + (isReversed == 1 ? "+" : "-") + (count * 3) + " where id=?", new String[]{winnerId + ""});
             } else {
+                int count = result * rate;
                 db.execSQL("update user set score = score " + (isReversed == 1 ? "-" : "+") + count + " where id=? or id==?", new String[]{winnerId + "", loserId + ""});
                 db.execSQL("update user set score = score " + (isReversed == 1 ? "+" : "-") + count + " where id!=? and id!=?", new String[]{winnerId + "", loserId + ""});
             }
@@ -170,13 +173,14 @@ public class Record implements Serializable, Comparable<Record> {
         }
     }
 
-    public static List<Record> getRecords() {
+    public static List<Record> getRecords(@Game int whichGame) {
         DBHelper helper = new DBHelper();
         SQLiteDatabase db = helper.getWritableDatabase();
         Cursor cursor = null;
         List<Record> records = new ArrayList<>();
         try {
-            cursor = db.rawQuery("select id, createTime, winnerId, loserId from record", null);
+            cursor = db.rawQuery("select id, createTime, winnerId, loserId,game, isReversed, isBasked, result from record" +
+                    " where game = ?", new String[]{whichGame + ""});
             if (cursor != null && cursor.moveToFirst()) {
                 Record record = null;
                 do {
@@ -184,12 +188,19 @@ public class Record implements Serializable, Comparable<Record> {
                     long createTime = cursor.getLong(1);
                     long winnerId = cursor.getLong(2);
                     long loserId = cursor.getLong(3);
+                    @Game int game = cursor.getInt(4);
+                    int isReversed = cursor.getInt(5);
+                    int isBasked = cursor.getInt(6);
+                    @RedTen int result = cursor.getInt(7);
                     record = new Record();
                     record.setId(id);
                     record.setCreateTime(createTime);
                     record.setWinnerId(winnerId);
                     record.setLoserId(loserId);
-                    //TODO
+                    record.setGame(game);
+                    record.setIsReversed(isReversed);
+                    record.setIsBasked(isBasked);
+                    record.setResult(result);
                     records.add(record);
                 } while (cursor.moveToNext());
                 return records;

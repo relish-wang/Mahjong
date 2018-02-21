@@ -28,6 +28,7 @@ import java.util.List;
 import wang.relish.mahjong.R;
 import wang.relish.mahjong.entity.Game;
 import wang.relish.mahjong.entity.Record;
+import wang.relish.mahjong.entity.RedTen;
 import wang.relish.mahjong.entity.User;
 import wang.relish.mahjong.util.TimeUtl;
 
@@ -43,6 +44,8 @@ public class RecordListActivity extends AppCompatActivity {
         intent.putExtra("game", game);
         context.startActivity(intent);
     }
+
+    public static final String[] RESULT = {"平局", "单关", "双关", "三关"};
 
     /**
      * 游戏
@@ -80,7 +83,7 @@ public class RecordListActivity extends AppCompatActivity {
     }
 
     public void loadData() {
-        mRecords = Record.getRecords();
+        mRecords = Record.getRecords(game);
         mAdapter.notifyDataSetChanged();
     }
 
@@ -114,6 +117,12 @@ public class RecordListActivity extends AppCompatActivity {
             holder.tv_day.setText(TimeUtl.getyyyyMMdd(record.getCreateTime()));
             holder.tv_time.setText(TimeUtl.getHHmm(record.getCreateTime()));
             holder.tv_record.setText(getRecordStr(record));
+
+            if (game == Game.RED_TEN) {
+                holder.tv_basked.setVisibility(record.getIsBasked() == 1 ? View.VISIBLE : View.GONE);
+                holder.tv_double_red_ten.setVisibility(record.getLoserId() == 0 ? View.VISIBLE : View.GONE);
+                holder.tv_reversed.setVisibility(record.getIsReversed() == 1 ? View.VISIBLE : View.GONE);
+            }
         }
 
         private SpannableStringBuilder getRecordStr(Record record) {
@@ -121,12 +130,12 @@ public class RecordListActivity extends AppCompatActivity {
             long winnerId = record.getWinnerId();
             long loserId = record.getLoserId();
             if (game == Game.MAHJONG) {
-                SpannableString winnerName = getName(winnerId, R.color.colorAccent);
+                SpannableString winnerName = getColorfulName(winnerId, R.color.colorAccent);
                 if (loserId == 0) {//自摸
                     sb.append(winnerName);
                     sb.append("自摸");
                 } else {//放铳
-                    SpannableString loserName = getName(loserId, R.color.colorPrimary);
+                    SpannableString loserName = getColorfulName(loserId, R.color.colorPrimary);
 
                     sb.append(loserName);
                     sb.append("放铳给");
@@ -134,18 +143,48 @@ public class RecordListActivity extends AppCompatActivity {
                 }
             } else if (game == Game.RED_TEN) {
                 // TODO 红十
+                @RedTen int result = record.getResult();
+                String resultStr = RESULT[result];
+                if (record.getLoserId() == 0 && record.getIsReversed() == 1) {
+                    resultStr = "关";
+                }
+                String winners = User.getNameById(winnerId) + (loserId == 0 ? "" : "、" + User.getNameById(loserId));
+                SpannableString winnerNames = getColorfulName(winners, R.color.colorAccent);
+                StringBuilder losers = new StringBuilder();
+                List<User> users = User.getUsers();
+                for (User user : users) {
+                    if (user.getId() == winnerId) {
+                        continue;
+                    }
+                    if (loserId != 0 && user.getId() == loserId) {
+                        continue;
+                    }
+                    losers.append(user.getName()).append("、");
+                }
+                losers.deleteCharAt(losers.length() - 1);
+                SpannableString loserNames = getColorfulName(losers.toString(), R.color.colorPrimary);
 
+                sb.append(winnerNames).append(" ");
+                if (record.getIsReversed() == 1) {
+                    sb.append("被 ").append(loserNames).append(" ").append(resultStr);
+                } else {
+                    sb.append(resultStr).append(" ").append(loserNames);
+                }
             } else {
                 sb.append("未知赌局");
             }
             return sb;
         }
 
-        private SpannableString getName(long userId, @ColorRes int colorRes) {
+        private SpannableString getColorfulName(long userId, @ColorRes int colorRes) {
             String name = User.getNameById(userId);
             if (TextUtils.isEmpty(name)) {
                 throw new RuntimeException("no such id: " + userId);
             }
+            return getColorfulName(name, colorRes);
+        }
+
+        private SpannableString getColorfulName(String name, @ColorRes int colorRes) {
             SpannableString ss = new SpannableString(name);
             int color = ContextCompat.getColor(RecordListActivity.this, colorRes);
             ForegroundColorSpan colorSpan = new ForegroundColorSpan(color);
@@ -172,12 +211,18 @@ public class RecordListActivity extends AppCompatActivity {
             TextView tv_day;
             TextView tv_time;
             TextView tv_record;
+            TextView tv_basked;
+            TextView tv_double_red_ten;
+            TextView tv_reversed;
 
             public VHolder(View itemView) {
                 super(itemView);
                 tv_day = itemView.findViewById(R.id.tv_day);
                 tv_time = itemView.findViewById(R.id.tv_time);
                 tv_record = itemView.findViewById(R.id.tv_record);
+                tv_basked = itemView.findViewById(R.id.tv_basked);
+                tv_double_red_ten = itemView.findViewById(R.id.tv_double_red_ten);
+                tv_reversed = itemView.findViewById(R.id.tv_reversed);
             }
         }
     }
