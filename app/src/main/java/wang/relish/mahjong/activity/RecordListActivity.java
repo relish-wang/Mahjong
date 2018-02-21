@@ -119,9 +119,31 @@ public class RecordListActivity extends AppCompatActivity {
             holder.tv_record.setText(getRecordStr(record));
 
             if (game == Game.RED_TEN) {
-                holder.tv_basked.setVisibility(record.getIsBasked() == 1 ? View.VISIBLE : View.GONE);
-                holder.tv_double_red_ten.setVisibility(record.getLoserId() == 0 ? View.VISIBLE : View.GONE);
-                holder.tv_reversed.setVisibility(record.getIsReversed() == 1 ? View.VISIBLE : View.GONE);
+                int isBasked = record.getIsBasked();
+                holder.tv_basked.setVisibility(isBasked == 1 ? View.VISIBLE : View.GONE);
+                long loserId = record.getLoserId();
+                holder.tv_double_red_ten.setVisibility(loserId == 0 ? View.VISIBLE : View.GONE);
+                int isReversed = record.getIsReversed();
+                holder.tv_reversed.setVisibility(isReversed == 1 ? View.VISIBLE : View.GONE);
+
+                int result = record.getResult();
+                holder.tv_value.setVisibility(result == RedTen.DOGFALL ? View.GONE : View.VISIBLE);
+
+                int value = 0;
+                int rate = 1 << isBasked << (isBasked == 1 ? isReversed : 0);
+                if (loserId == 0) {
+                    int realResult = result == RedTen.TRIPLE_SHUT ? result : 0;
+                    if (isReversed == 0) {
+                        value = rate * realResult * 3;
+                    } else {
+                        value = rate * result;
+                    }
+                } else {
+                    value = rate * result;
+                }
+                holder.tv_value.setText(value >= 0 ? "+" + value : value + "");
+                holder.tv_value.setTextColor(ContextCompat.getColor(RecordListActivity.this,isReversed==1?R.color.colorPrimary:R.color.red_ten));
+                holder.tv_value.setBackgroundResource(isReversed==1?R.drawable.red_ten_reverse:R.drawable.red_ten_double);
             }
         }
 
@@ -214,6 +236,7 @@ public class RecordListActivity extends AppCompatActivity {
             TextView tv_basked;
             TextView tv_double_red_ten;
             TextView tv_reversed;
+            TextView tv_value;
 
             public VHolder(View itemView) {
                 super(itemView);
@@ -223,6 +246,7 @@ public class RecordListActivity extends AppCompatActivity {
                 tv_basked = itemView.findViewById(R.id.tv_basked);
                 tv_double_red_ten = itemView.findViewById(R.id.tv_double_red_ten);
                 tv_reversed = itemView.findViewById(R.id.tv_reversed);
+                tv_value = itemView.findViewById(R.id.tv_value);
             }
         }
     }
