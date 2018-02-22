@@ -148,8 +148,8 @@ public class Record implements Serializable, Comparable<Record> {
             if (loserId == 0) {// 双红十
                 int realResult = result == RedTen.TRIPLE_SHUT ? result : 0;
                 int count = realResult * rate;
-                db.execSQL("update user set score = score " + (isReversed == 1 ? "-" : "+") + count + " where id!=?", new String[]{winnerId + ""});
-                db.execSQL("update user set score = score " + (isReversed == 1 ? "+" : "-") + (count * 3) + " where id=?", new String[]{winnerId + ""});
+                db.execSQL("update user set score = score " + (isReversed == 1 ? "+" : "-") + count + " where id!=?", new String[]{winnerId + ""});
+                db.execSQL("update user set score = score " + (isReversed == 1 ? "-" : "+") + (count * 3) + " where id=?", new String[]{winnerId + ""});
             } else {
                 int count = result * rate;
                 db.execSQL("update user set score = score " + (isReversed == 1 ? "-" : "+") + count + " where id=? or id==?", new String[]{winnerId + "", loserId + ""});
