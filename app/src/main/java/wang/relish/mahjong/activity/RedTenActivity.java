@@ -138,16 +138,27 @@ public class RedTenActivity extends AbsGameActivity {
 
     private void selectRedTen(final RedTenCallback callback) {
         final List<Integer> redTens = new ArrayList<>();
-        redTens.add(RedTen.DOGFALL);
-        redTens.add(RedTen.SINGLE_SHUT);
-        redTens.add(RedTen.DOUBLE_SHUT);
-        redTens.add(RedTen.TRIPLE_SHUT);
+        if (redTenOwners.size() == 1) {
+            redTens.add(RedTen.DOGFALL);
+            redTens.add(RedTen.TRIPLE_SHUT);
+        } else {
+            redTens.add(RedTen.DOGFALL);
+            redTens.add(RedTen.SINGLE_SHUT);
+            redTens.add(RedTen.DOUBLE_SHUT);
+        }
         int count = redTens.size();
         String[] names = new String[count];
-        names[0] = "平局";
-        names[1] = "单关";
-        names[2] = "双关";
-        names[3] = "三关";
+        if (redTenOwners.size() == 1) {
+            names[0] = "平局";
+            names[1] = "三关";
+        } else if (redTenOwners.size() == 2) {
+            names[0] = "平局";
+            names[1] = "单关";
+            names[2] = "双关";
+        } else {
+            ToastUtil.show("红十最多两个人拥有！");
+            throw new RuntimeException("红十最多两个人拥有！");
+        }
         new AlertDialog.Builder(RedTenActivity.this)
                 .setSingleChoiceItems(names, -1, new DialogInterface.OnClickListener() {
                     @Override
